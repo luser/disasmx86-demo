@@ -1,0 +1,63 @@
+<!DOCTYPE HTML>
+<html><head>
+<title>disasmx86.js demo</title>
+<script type="text/javascript" src="DataView.js/DataView.js"></script>
+<script type="text/javascript"
+src="BufferView/BufferView.js"></script>
+<script type="text/javascript" src="uint64.js/uint64.js"></script>
+<script type="text/javascript" src="elf.js/elf.js"></script>
+<script type="text/javascript" src="disasmx86.js/disasmx86.js"></script>
+<script type="text/javascript">
+var req = new XMLHttpRequest();
+req.open("GET", "test-x86", false);
+if ('responseType' in req)
+  req.responseType = "arraybuffer";
+req.send(null);
+var buffer = null;
+if ('mozResponseArrayBuffer' in req)
+  buffer = req.mozResponseArrayBuffer;
+else if ('response' in req)
+  buffer = req.response;
+if (buffer)
+  var elf = new ELF(buffer);
+
+function displayMemory() {
+  if (!elf)
+    return;
+  //XXX: ugh
+  var p = document.getElementById("p");
+  p.firstChild.textContent = "";
+  var a = new Uint64(parseInt(document.getElementById("addr").value));
+  var mr = elf.getMemoryAtAddress(a);
+  var start = a.minus(mr.startAddress).lo;
+  for (var i=0; i<128; i++) {
+    if (i % 16 == 0) {
+      p.firstChild.textContent += "\n" + a.plus(new Uint64(i)).toString();
+    }
+    var b = mr.bytes[start + i].toString(16);
+    if (b.length == 1)
+      b = "0" + b;
+    p.firstChild.textContent += " " + b;
+  }
+}
+
+function disassembleMemory() {
+  if (!elf)
+    return;
+  //XXX: ugh
+  var p = document.getElementById("p");
+  p.firstChild.textContent = "";
+  var a = new Uint64(parseInt(document.getElementById("addr").value));
+  var count = parseInt(document.getElementById("num").value);
+  var mr = elf.getMemoryAtAddress(a);
+  p.firstChild.textContent = disassemble_memory(mr, a, count);
+}
+</script>
+</head>
+<body>
+Disassemble <input type="text" id="num" value="4"></input> instructions at <input type="text" id="addr" value="0x80482e4"></input><button onclick="disassembleMemory()">Go</button>
+<pre id="p">
+&nbsp;
+</pre>
+</body>
+</html>

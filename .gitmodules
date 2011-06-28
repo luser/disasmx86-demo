@@ -1,0 +1,15 @@
+[submodule "uint64.js"]
+	path = uint64.js
+	url = git://github.com/luser/uint64.js.git
+[submodule "elf.js"]
+	path = elf.js
+	url = git://github.com/luser/elf.js.git
+[submodule "disasmx86.js"]
+	path = disasmx86.js
+	url = git://github.com/luser/disasmx86.js.git
+[submodule "BufferView"]
+	path = BufferView
+	url = git://github.com/davidflanagan/BufferView.git
+[submodule "DataView.js"]
+	path = DataView.js
+	url = git://github.com/davidflanagan/DataView.js.git
