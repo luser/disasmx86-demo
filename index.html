@@ -8,18 +8,45 @@ src="BufferView/BufferView.js"></script>
 <script type="text/javascript" src="elf.js/elf.js"></script>
 <script type="text/javascript" src="disasmx86.js/disasmx86.js"></script>
 <script type="text/javascript">
-var req = new XMLHttpRequest();
-req.open("GET", "test-x86", false);
-if ('responseType' in req)
-  req.responseType = "arraybuffer";
-req.send(null);
-var buffer = null;
-if ('mozResponseArrayBuffer' in req)
-  buffer = req.mozResponseArrayBuffer;
-else if ('response' in req)
-  buffer = req.response;
-if (buffer)
-  var elf = new ELF(buffer);
+var elf = null;
+function start() {
+  elf = parseURL("test-x86");
+}
+
+function updateStatus(e, name) {
+  document.getElementById("status").firstChild.textContent = "Loaded "
+  + name + ", entry address is " + e.entry.toString();
+}
+
+function parseBuffer(buffer, name) {
+  try {
+    var e = new ELF(buffer);
+    updateStatus(e, name);
+    return e;
+  }
+  catch (ex) {
+    alert("Failed to parse file: " + ex);
+  }
+  return null;
+}
+
+function parseURL(url, name) {
+  name = name ? name : url;
+  var req = new XMLHttpRequest();
+  req.open("GET", url, false);
+  if ('responseType' in req)
+    req.responseType = "arraybuffer";
+  req.send(null);
+  var buffer = null;
+  if ('mozResponseArrayBuffer' in req)
+    buffer = req.mozResponseArrayBuffer;
+  else if ('response' in req)
+    buffer = req.response;
+
+  if (buffer == null)
+    return null;
+ return parseBuffer(buffer, name);
+}
 
 function displayMemory() {
   if (!elf)
@@ -52,13 +79,26 @@ function disassembleMemory() {
   var mr = elf.getMemoryAtAddress(a);
   p.firstChild.textContent = disassemble_memory(mr, a, count);
 }
+
+function chooseFile() {
+  document.getElementById("fe").click();
+}
+
+function handleFiles(files) {
+   var URL = window.URL.createObjectURL(files[0]);
+   elf = parseURL(URL, files[0].name);
+}
 </script>
 </head>
-<body>
-Disassemble <input type="text" id="num" value="4"></input> instructions at <input type="text" id="addr" value="0x80482e4"></input><button onclick="disassembleMemory()">Go</button>
+<body onload="start()">
+<p><span id="status"> </span>
+<p>Disassemble <input type="text" id="num" value="4"> instructions at <input type="text" id="addr" value="0x80482e4"><button onclick="disassembleMemory()">Go</button>
 <pre id="p">
 &nbsp;
 </pre>
-<p>This is a simple demo of <a href="https://github.com/luser/disasmx86.js">disasmx86.js</a>, using <a href="test-x86">this ELF binary</a>.
+<p>This is a simple demo of <a
+  href="https://github.com/luser/disasmx86.js">disasmx86.js</a>, using
+  <a href="test-x86">this ELF binary</a>.
+<p><input type="file" id="fe" style="display:none" onchange="handleFiles(this.files)"><a href="#" onclick="chooseFile(); return false;">Select a different file</a>
 </body>
 </html>
