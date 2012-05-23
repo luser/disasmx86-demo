@@ -1,5 +1,6 @@
 <!DOCTYPE HTML>
 <html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>disasmx86.js demo</title>
 <script type="text/javascript" src="DataView.js/DataView.js"></script>
 <script type="text/javascript"
@@ -10,7 +11,12 @@ src="BufferView/BufferView.js"></script>
 <script type="text/javascript">
 var elf = null;
 function start() {
-  elf = parseURL("test-x86");
+  parseURL("test-x86", "test-x86",
+           function(f) {
+             elf = f;
+             if (elf)
+               disassembleMemory();
+           });
 }
 
 function updateStatus(e, name) {
@@ -30,22 +36,30 @@ function parseBuffer(buffer, name) {
   return null;
 }
 
-function parseURL(url, name) {
+function parseURL(url, name, callback) {
   name = name ? name : url;
   var req = new XMLHttpRequest();
-  req.open("GET", url, false);
+  req.onreadystatechange = function() {
+    if (req.readyState == 4) {
+      if (req.status == 200 ||
+          (location.protocol == "file:" && req.status == 0)) {
+        var buffer = null;
+        if ('mozResponseArrayBuffer' in req)
+          buffer = req.mozResponseArrayBuffer;
+        else if ('response' in req)
+          buffer = req.response;
+        if (buffer) {
+          callback(parseBuffer(buffer, name));
+          return;
+        }
+      }
+      callback(null);
+    }
+  }
+  req.open("GET", url, true);
   if ('responseType' in req)
     req.responseType = "arraybuffer";
   req.send(null);
-  var buffer = null;
-  if ('mozResponseArrayBuffer' in req)
-    buffer = req.mozResponseArrayBuffer;
-  else if ('response' in req)
-    buffer = req.response;
-
-  if (buffer == null)
-    return null;
- return parseBuffer(buffer, name);
 }
 
 function displayMemory() {
@@ -86,7 +100,7 @@ function chooseFile() {
 
 function handleFiles(files) {
    var URL = window.URL.createObjectURL(files[0]);
-   elf = parseURL(URL, files[0].name);
+   parseURL(URL, files[0].name, function(f) { elf = f; });
 }
 </script>
 </head>
